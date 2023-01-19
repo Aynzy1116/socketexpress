@@ -25,8 +25,7 @@ exports.addUser = async (req, res, next) => {
   const password = req.body.password
   try {
     let sql = `select name from user where name = '${userName}'`
-    let sqlArr = []
-    let callBack = (err, data) => {
+    sqlConnect(sql, [], (err, data) => {
       if (err) {
         console.log('连接出错了');
       } else {
@@ -37,33 +36,20 @@ exports.addUser = async (req, res, next) => {
             'code': 600
           })
         } else {
-          insertUser(res, userName, password)
+          let sql2 = `INSERT INTO user (name,password) VALUES('${userName}','${password}')`
+          sqlConnect(sql2, [], (err, data) => {
+            if (err) {
+              console.log('注册失败');
+            } else {
+              res.send({
+                'message': '注册成功',
+                'code': 200
+              })
+            }
+          })
         }
       }
-    }
-    sqlConnect(sql, sqlArr, callBack)
-  } catch (err) {
-    next(err)
-  }
-}
-
-function insertUser (res, userName, password) {
-  try {
-    let sql = `INSERT INTO user (name,password) VALUES('${userName}','${password}')`
-    console.log('sql', sql);
-    let sqlArr = []
-    let callBack = (err, data) => {
-      if (err) {
-        console.log('连接出错了');
-      } else {
-        console.log('data', data);
-        res.send({
-          'message': '注册成功',
-          'code': 200
-        })
-      }
-    }
-    sqlConnect(sql, sqlArr, callBack)
+    })
   } catch (err) {
     next(err)
   }
@@ -109,8 +95,7 @@ exports.addFriends = async (req, res, next) => {
     const myId = req.body.myId
     let sql = `select * from user where name = '${userName}'`
     console.log('sql', sql);
-    let sqlArr = []
-    let callBack = (err, data) => {
+    sqlConnect(sql, [], (err, data) => {
       if (err) {
         console.log('连接出错了');
       } else {
@@ -124,19 +109,23 @@ exports.addFriends = async (req, res, next) => {
           })
         }
       }
-    }
+    })
     function add (myId, addfriendId, otherFriends) {
       // 先查用户信息的sql
       let sql2 = `select friends from user where id = '${myId}'`
-      let sqlArr2 = []
-      let sqlArr3 = []
-      let callBack2 = (err, data) => {
+      sqlConnect(sql2, [], (err, data) => {
         if (err) {
           console.log('连接出错了');
         } else {
           console.log('data111', data[0].friends);
-          let friends = data[0].friends.split('-')
-          otherFriends = otherFriends.split('-')
+          let friends = []
+          if (data[0].friends) {
+            friends = data[0].friends.split('-')
+          }
+          if (otherFriends) {
+            otherFriends = otherFriends.split('-')
+          }
+
           if (friends.find(x => x == addfriendId)) {
             res.send({
               'message': '该用户已经是你的好友了',
@@ -150,25 +139,21 @@ exports.addFriends = async (req, res, next) => {
             // 修改用户信息的sql
             let sql3 = `UPDATE user SET friends='${friends}' WHERE id='${myId}'`
             let sql4 = `UPDATE user SET friends='${otherFriends}' WHERE id='${addfriendId}'`
-            sqlConnect(sql3, sqlArr3, callBack3)
+            sqlConnect(sql3, [], (err, data) => {
+              if (err) {
+                console.log('连接出错了');
+              } else {
+                res.send({
+                  'message': '添加成功',
+                  'code': 200,
+                })
+              }
+            })
             sqlConnect(sql4)
           }
         }
-      }
-
-      sqlConnect(sql2, sqlArr2, callBack2)
-      let callBack3 = (err, data) => {
-        if (err) {
-          console.log('连接出错了');
-        } else {
-          res.send({
-            'message': '添加成功',
-            'code': 200,
-          })
-        }
-      }
+      })
     }
-    sqlConnect(sql, sqlArr, callBack)
   } catch (err) {
     next(err)
   }
