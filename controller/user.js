@@ -69,6 +69,7 @@ exports.login = async (req, res, next) => {
       } else {
         console.log('data', data);
         if (data.length > 0) {
+          delete data[0].password
           res.send({
             'message': '登录成功',
             'code': 200,
@@ -182,7 +183,7 @@ exports.getFriends = async (req, res, next) => {
           })
         })
       )
-      // console.log('result', result);
+      console.log('result', result[0].messages);
       res.send({
         'result': result,
         'code': 200,
